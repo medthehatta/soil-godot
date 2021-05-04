@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=3 format=2]
+
+[ext_resource path="res://Scripts/RichTableConfig.gd" type="Script" id=1]
+[ext_resource path="res://Fonts/Roboto-24.tres" type="DynamicFont" id=2]
+
+[resource]
+script = ExtResource( 1 )
+row_height = 40
+fields = [ "Name", "Quality", "Quantity" ]
+field_widths = [ -1, 100, 100 ]
+font = ExtResource( 2 )

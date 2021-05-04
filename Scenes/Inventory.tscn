@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Scenes/RichTable.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Resources/InventoryRichTableRowConfig.tres" type="Resource" id=2]
+[ext_resource path="res://Scripts/Inventory.gd" type="Script" id=3]
+
+[node name="Inventory" type="Control"]
+margin_right = 550.0
+margin_bottom = 920.0
+rect_min_size = Vector2( 550, 920 )
+size_flags_horizontal = 0
+size_flags_vertical = 0
+script = ExtResource( 3 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RichTable" parent="." instance=ExtResource( 1 )]
+row_config = ExtResource( 2 )
+multi_select = false
+[connection signal="sort_by" from="RichTable" to="." method="_on_RichTable_sort_by"]
