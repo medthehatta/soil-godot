@@ -2,24 +2,135 @@
 
 extends Control
 
+# -- configuration
+
 export(Resource) var row_config
 export(bool) var multi_select
+
+# -- signals (external)
 
 signal item_selected(it)
 signal item_unselected(it)
 signal selection_changed(sel)
 signal sort_by(field)
 
+# -- signals (internal)
+
+signal _scrollbar_filled
+signal _item_added(it)
+signal _view_item_selected(it)
+signal _view_item_unselected(it)
+
+# -- node aliases
+
 onready var scroll = $VBoxOuter/Scroll
 onready var listing = $VBoxOuter/Scroll/Listing
 onready var header_row = $VBoxOuter/HeaderRow
 onready var rng = Rng.new()
 
-var last_new = null
-var selected = []
+
+# -- MODEL --------------------------------------------------------------------
 
 
+var state = {
+    "selected": [],
+    "last_new": null,
+    "items": []
+}
+
+
+# Set the configuration parameters
+func configure(p_row_config = null, p_multi_select = null):
+    if p_row_config:
+        row_config = p_row_config
+    if p_multi_select:
+        multi_select = p_multi_select
+    return self
+
+
+# Set the initial state
+func initialize(p_state : Dictionary):
+    state = p_state
+    return self
+
+
+# Convenience method for setting the initial state, must call initialize
+func setup(items : Array):
+    return initialize({"items": items, "selected": [], "last_new": null})
+
+
+# -- SIGNAL HANDLERS ----------------------------------------------------------
+
+# These signal handlers receive signals from the view, and should update the
+# state and (optionally, but usually) emit signals telling the view to update,
+# or telling external nodes that a state change has occurred.
+
+
+func _on_row_pressed(row):
+    if not (row in state["selected"]):
+        # If we are not allowing multi select, we should unselect whatever else
+        # is selected first
+        if not multi_select and state["selected"].size() > 0:
+            _unselect_one(state["selected"][0])
+        _select_one(row)
+    else:
+        _unselect_one(row)
+    emit_signal("selection_changed", get_selected())
+
+
+func get_selected():
+    var result = []
+    for s in state["selected"]:
+        result.append(s.item)
+    return result
+
+
+func _select_one(row):
+    state["selected"].append(row)
+    emit_signal("item_selected", row.item)
+    emit_signal("_view_item_selected", row)
+
+
+func _unselect_one(row):
+    state["selected"].erase(row)
+    emit_signal("item_unselected", row.item)
+    emit_signal("_view_item_unselected", row)
+
+
+func _on_header_field_click(data):
+    var field = data
+    emit_signal("sort_by", field)
+
+
+func _on_scrollbar_filled():
+    # The scrollcontainer is filled with dummy items so the scrollbar always
+    # displays.  Once it's filled, we need to reset the "last_new" element,
+    # otherwise we will add elements to the end, after the dummy items.
+    state["last_new"] = null
+
+
+func _on_item_added(new_item):
+    state["last_new"] = new_item
+
+
+# -- VIEW ---------------------------------------------------------------------
+
+# These "view" functions should only read the state, not write to it.  Instead,
+# they should just emit internal signals, which will be handled by a signal
+# handler.
+
+
+# Initialize the view
+#
+# We don't just inline view_init() into _ready() in case we need to validate
+# the state before running view_init().
+#
 func _ready():
+    return view_init()
+
+
+# Initialize the view
+func view_init():
     ControlUtil.set_fill_parent($VBoxOuter)
     ControlUtil.set_fill_parent(scroll)
     ControlUtil.set_fill_parent(listing)
@@ -34,7 +145,28 @@ func _ready():
     var scroll_width = scroll.get_v_scrollbar().get_rect().size.x
     header_row.add_constant_override("margin_right", scroll_width)
 
-    self.connect("selection_changed", self, "_on_selection_changed")
+    self.connect("_item_added", self, "_on_item_added")
+    self.connect("_scrollbar_filled", self, "_on_scrollbar_filled")
+    self.connect("_view_item_selected", self, "highlight_selected")
+    self.connect("_view_item_unselected", self, "unhighlight_selected")
+
+
+# Render the full state
+func render():
+    clear()
+    fill_to_make_scrollbar()
+    for item in state["items"]:
+        add_item(item)
+
+
+# Highlight a selected row
+func highlight_selected(row):
+    row.highlight()
+
+
+# Unhighlight a selected row
+func unhighlight_selected(row):
+    row.unhighlight()
 
 
 func fill_to_make_scrollbar():
@@ -42,9 +174,7 @@ func fill_to_make_scrollbar():
     var items_per_page = int(listing.get_rect().size.y / row_config.row_height)
     for _x in range(0, items_per_page):
         add_item({})
-    # We have to reset last_new, or we will add the actual elements _after_ the
-    # empty ones
-    last_new = null
+    emit_signal("_scrollbar_filled")
 
 
 func add_item(item : Dictionary):
@@ -55,15 +185,15 @@ func add_item(item : Dictionary):
     else:
         new_item = make_empty_row()
 
-    if last_new == null:
+    if state["last_new"] == null:
         listing.add_child(new_item)
         listing.move_child(new_item, 0)
     else:
-        listing.add_child_below_node(last_new, new_item)
+        listing.add_child_below_node(state["last_new"], new_item)
 
     new_item.connect("row_selected", self, "_on_row_pressed")
 
-    last_new = new_item
+    emit_signal("_item_added", new_item)
 
 
 func clear():
@@ -88,43 +218,3 @@ func make_item(item : Dictionary):
 func make_empty_row():
     var row = preload("res://Scenes/ClickableHBoxContainer.tscn").instance()
     return row.setup(row_config)
-
-
-func _on_row_pressed(row):
-    if not (row in selected):
-        # If we are not allowing multi select, we should unselect whatever else
-        # is selected first
-        if not multi_select and selected.size() > 0:
-            _unselect_one(selected[0])
-        _select_one(row)
-    else:
-        _unselect_one(row)
-    emit_signal("selection_changed", get_selected())
-
-
-func _select_one(row):
-    selected.append(row)
-    row.highlight()
-    emit_signal("item_selected", row.item)
-
-
-func _unselect_one(row):
-    selected.erase(row)
-    row.unhighlight()
-    emit_signal("item_unselected", row.item)
-
-
-func get_selected():
-    var result = []
-    for s in selected:
-        result.append(s.item)
-    return result
-
-
-func _on_selection_changed(sel):
-    print(str(sel))
-
-
-func _on_header_field_click(data):
-    var field = data
-    emit_signal("sort_by", field)
