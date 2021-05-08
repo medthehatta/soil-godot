@@ -4,8 +4,8 @@ extends Control
 
 # -- configuration
 
-export(Resource) var row_config
-export(bool) var multi_select
+export(Resource) var state
+var last_new = null
 
 # -- signals (external)
 
@@ -32,31 +32,15 @@ onready var rng = Rng.new()
 # -- MODEL --------------------------------------------------------------------
 
 
-var state = {
-    "selected": [],
-    "last_new": null,
-    "items": []
-}
-
-
 # Set the configuration parameters
-func configure(p_row_config = null, p_multi_select = null):
+func configure(p_state = null, p_row_config = null, p_multi_select = null):
+    if p_state:
+        state = p_state
     if p_row_config:
         row_config = p_row_config
     if p_multi_select:
         multi_select = p_multi_select
     return self
-
-
-# Set the initial state
-func initialize(p_state : Dictionary):
-    state = p_state
-    return self
-
-
-# Convenience method for setting the initial state, must call initialize
-func setup(items : Array):
-    return initialize({"items": items, "selected": [], "last_new": null})
 
 
 # -- SIGNAL HANDLERS ----------------------------------------------------------
@@ -106,11 +90,11 @@ func _on_scrollbar_filled():
     # The scrollcontainer is filled with dummy items so the scrollbar always
     # displays.  Once it's filled, we need to reset the "last_new" element,
     # otherwise we will add elements to the end, after the dummy items.
-    state["last_new"] = null
+    last_new = null
 
 
 func _on_item_added(new_item):
-    state["last_new"] = new_item
+    last_new = new_item
 
 
 # -- VIEW ---------------------------------------------------------------------
@@ -185,11 +169,11 @@ func add_item(item : Dictionary):
     else:
         new_item = make_empty_row()
 
-    if state["last_new"] == null:
+    if last_new == null:
         listing.add_child(new_item)
         listing.move_child(new_item, 0)
     else:
-        listing.add_child_below_node(state["last_new"], new_item)
+        listing.add_child_below_node(last_new, new_item)
 
     new_item.connect("row_selected", self, "_on_row_pressed")
 
