@@ -1,0 +1,7 @@
+# InventoryStateGetter.gd
+
+
+extends Resource
+
+
+

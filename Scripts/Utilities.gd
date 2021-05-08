@@ -26,18 +26,15 @@ func zip(lst1 : Array, lst2 : Array):
     return result
 
 
-func backend_get(path, obj, callback):
-    var http_request = HTTPRequest.new()
-    add_child(http_request)
-    http_request.connect("request_completed", self, "_process_json")
-
-    var error = http_request.request("http://localhost:8000/" + path)
-    if error != OK:
-        push_error("An error occurred in GET for " + path)
-
-
-func _process_json(result, response_code, headers, body):
-    var data = parse_json(body.get_string_from_utf8())
+# Godot slicing is bizarre in so many ways, so we wrap a common case here
+func rest(arr):
+    var arrlen = arr.size()
+    if arrlen == 0:
+        assert(false, "Cannot get rest of empty array")
+    elif arrlen == 1:
+        return []
+    else:
+        return arr.slice(1, arrlen - 1)
 
 
 func dict_items(dict):

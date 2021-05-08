@@ -30,7 +30,7 @@ __meta__ = {
 
 [node name="MarketContainer" type="VBoxContainer" parent="MarginContainer"]
 margin_right = 550.0
-margin_bottom = 123.0
+margin_bottom = 99.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/separation = 10
@@ -40,7 +40,7 @@ __meta__ = {
 
 [node name="TopItems" type="HBoxContainer" parent="MarginContainer/MarketContainer"]
 margin_right = 550.0
-margin_bottom = 99.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/separation = 10
@@ -50,7 +50,7 @@ __meta__ = {
 
 [node name="OfferTrade" type="Button" parent="MarginContainer/MarketContainer/TopItems"]
 margin_right = 138.0
-margin_bottom = 99.0
+margin_bottom = 75.0
 rect_min_size = Vector2( 100, 75 )
 custom_fonts/font = SubResource( 1 )
 text = "Make Offer"
@@ -58,7 +58,7 @@ text = "Make Offer"
 [node name="Filters" type="GridContainer" parent="MarginContainer/MarketContainer/TopItems"]
 margin_left = 148.0
 margin_right = 301.0
-margin_bottom = 99.0
+margin_bottom = 75.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -72,22 +72,22 @@ text = "Include self"
 [node name="HSpace" type="Control" parent="MarginContainer/MarketContainer/TopItems"]
 margin_left = 311.0
 margin_right = 440.0
-margin_bottom = 99.0
+margin_bottom = 75.0
 size_flags_horizontal = 3
 
 [node name="Purchase" type="Button" parent="MarginContainer/MarketContainer/TopItems"]
 margin_left = 450.0
 margin_right = 550.0
-margin_bottom = 99.0
+margin_bottom = 75.0
 rect_min_size = Vector2( 100, 75 )
 custom_fonts/font = SubResource( 1 )
 disabled = true
 text = "Trade"
 
 [node name="HSeparator" type="HSeparator" parent="MarginContainer/MarketContainer"]
-margin_top = 109.0
+margin_top = 85.0
 margin_right = 550.0
-margin_bottom = 113.0
+margin_bottom = 89.0
 size_flags_horizontal = 3
 
 [node name="ErrorLabel" type="Label" parent="MarginContainer/MarketContainer"]
@@ -100,11 +100,10 @@ align = 1
 [node name="RichTable" parent="MarginContainer/MarketContainer" instance=ExtResource( 3 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
-margin_top = 123.0
+margin_top = 99.0
 margin_right = 550.0
-margin_bottom = 123.0
+margin_bottom = 99.0
 rect_scale = Vector2( 1, 1 )
-multi_select = false
 [connection signal="item_selected" from="MarginContainer/MarketContainer/RichTable" to="." method="_on_RichTable_item_selected"]
 [connection signal="item_unselected" from="MarginContainer/MarketContainer/RichTable" to="." method="_on_RichTable_item_unselected"]
 [connection signal="sort_by" from="MarginContainer/MarketContainer/RichTable" to="." method="_on_RichTable_sort_by"]
